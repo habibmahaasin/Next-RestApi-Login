@@ -19,4 +19,4 @@ npm install
 npm run dev
 ```
 ## Note
-untuk code masih berantakan & baru selesai consume API untuk POST (login) dan GET(list user)
+untuk code masih berantakan & baru "sekedar jalan" untuk consume API POST (login) dan GET(list user)
