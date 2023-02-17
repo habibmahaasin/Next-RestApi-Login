@@ -1,35 +1,10 @@
 import { getCookie,deleteCookie } from 'cookies-next';
-import useSWR from 'swr'
-const axios = require('axios');
 
-const fetchApi = async ({res,req}) => {
-    const cookie = getCookie('token',{ req, res });
-    
-    const resp = axios.get('http://localhost:8080/api/v1/user/',{
-        headers: {
-            'Content-Type': 'application/json',
-            'access-token': cookie
-        }
-    })
-    .then(response => response.data)
-    .catch(function (error) {
-        error
-        window.location.href = "/";
-    })
-    
-    return resp
-}
-
-export default function Dashboard(){
-    const { data, error } = useSWR('dashboard',fetchApi)
-    if(error) return 'Error'
-    if(!data) return 'loading...'
-    
+export default function Dashboard({userData}){
     const logout = () => {
         deleteCookie('token');
         window.location.href = "/dashboard";
     }
-
     return (
         <div>
             <div className="overflow-x-auto mt-8">
@@ -43,12 +18,12 @@ export default function Dashboard(){
                     </tr>
                     </thead> 
                     <tbody>
-                    {data.data.map((d) => {
+                    {userData.map((data) => {
                         return(
-                            <tr key={d.user_id}>
-                                <th>{d.user_id}</th> 
-                                <td>{d.name}</td> 
-                                <td>{d.email}</td> 
+                            <tr key={data.user_id}>
+                                <th>{data.user_id}</th> 
+                                <td>{data.name}n</td> 
+                                <td>{data.email}</td> 
                             </tr>
                     )})}
                     </tbody> 
@@ -70,4 +45,42 @@ export default function Dashboard(){
             </div>
         </div>
     )
+}
+
+export async function getServerSideProps({req,res}){
+    const cookie = getCookie('token',{ req, res });
+
+    if (cookie === undefined || cookie === null || cookie === "") {
+        return {
+            redirect: {
+                destination: '/',
+                permanent: false
+            }
+        }
+    }
+
+    const resp = await fetch('https://gop-api.herokuapp.com/api/v1/user',{
+        method : 'GET',
+        headers : {
+            'Content-Type': 'application/json',
+            'access-token': cookie
+        }
+    })
+    const data = await resp.json();
+
+    if (data.status_code === 200) {
+        return {
+            props:{
+                userData : data.data,
+            }
+        }
+    } else{
+        deleteCookie('token',{req, res});
+        return {
+            redirect: {
+                destination: '/',
+                permanent: false
+            }
+        }
+    }
 }
